@@ -3,9 +3,12 @@ import multiprocessing as mp
 import os
 import math
 import array
+import sys
 
 size = 1000
 zoo = pow(0.5, 13.0 * 0.7)
+arguments = sys.argv
+t = int(arguments[1])
 
 def calcul(x,y,image,pixel_index):
         p_x = x/size * 2.0 - 1.0
@@ -47,15 +50,37 @@ def calcul(x,y,image,pixel_index):
         else:
             image[pixel_index + 0] = image[pixel_index + 1] = image[pixel_index + 2] = 0
 
+def fonction(act, tab, sem):
+    sem.acquire()
+    while (act[0] < size):
+        y =  act[0]
+        act[0] += 1
+        sem.release()
+        for x in range(size):
+            calcul(x, y, tab, 3 * (y * size + x))
+        sem.acquire()
+               
 
 #end calcul
 
-image = bytearray(3*size*size)
-for y in range(size):
-    for x in range(size):
-        calcul(x,y,image,3*(y * size + x))
+tab = mp.Array('i', size * size * 3)
 
-fd = os.open("image1.ppm",os.O_CREAT|os.O_WRONLY,0o644)
-os.write(fd,"P6\n{} {}\n255\n".format(size,size).encode())
-os.write(fd,image)
+act = mp.Array('i',1)
+act[0] = 0
+sem = mp.Lock()
+processList = []
+for v in range(t):
+    process = mp.Process(target=fonction, args=(act, tab, sem))
+    processList.append(process)
+    process.start()
+
+for i in range(t):
+    processList[i].join()
+
+fd = os.open("image1.ppm", os.O_CREAT | os.O_WRONLY, 0o644)
+os.write(fd, "P6\n{} {}\n255\n".format(size, size).encode())
+os.write(fd, bytearray(tab[:]))
 os.close(fd)
+
+
+
