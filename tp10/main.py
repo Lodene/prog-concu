@@ -59,7 +59,7 @@ def fonction(act, tab, sem):
         for x in range(size):
             calcul(x, y, tab, 3 * (y * size + x))
         sem.acquire()
-               
+    sem.release()
 
 #end calcul
 
