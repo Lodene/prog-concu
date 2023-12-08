@@ -67,7 +67,7 @@ tab = mp.Array('i', size * size * 3)
 
 act = mp.Array('i',1)
 act[0] = 0
-sem = mp.Lock()
+sem = mp.Lock() #initialisation 
 processList = []
 for v in range(t):
     process = mp.Process(target=fonction, args=(act, tab, sem))
