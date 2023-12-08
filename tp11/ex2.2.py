@@ -15,7 +15,7 @@ def calculateur(output1, input2, i, sem):
             calcul = int(data[0]) * int(data[2])
         elif (data[1] == "/"):
             calcul = int(data[0]) / int(data[2])
-        input2.send(calcul)
+        input2[i].send(calcul)
 
 def demandeur(output2, input1, i, sem):
         valeur_utilisateur1 = random.randint(0, 9)
@@ -23,11 +23,12 @@ def demandeur(output2, input1, i, sem):
         operations = ["+", "-", "*", "/"]
         signe = random.choice(operations)
 
-        input1.send((valeur_utilisateur1, signe, valeur_utilisateur2))
+        input1.send((valeur_utilisateur1, signe, valeur_utilisateur2, i))
         sem.acquire()
         data = output2.recv()
         sem.release()
         print("result " + str(data) + " de : " + str(i))
+
 
 if __name__ == "__main__":
     process1 = []
@@ -35,13 +36,18 @@ if __name__ == "__main__":
     output1,input1 = mp.Pipe()
     number = 5
     sem = mp.Lock() #initialisation 
-
+    tab = []
+    tab2 = []
     for i in range (number):
         output2,input2 = mp.Pipe()
-        process1.append(mp.Process(target=calculateur, args=(output1, input2, i, sem)))
+        tab.append(input2)
+        tab2.append(output2)
+
+    for i in range (number):
+        process1.append(mp.Process(target=calculateur, args=(output1, tab, i, sem, )))
         process1[i].start()
 
-        process2.append(mp.Process(target=demandeur, args=(output2, input1, i, sem)))
+        process2.append(mp.Process(target=demandeur, args=(tab2[i], input1, i, sem)))
         process2[i].start()
 
     for i in range (number):
